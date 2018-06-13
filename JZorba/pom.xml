@@ -1,0 +1,71 @@
+
+<project
+	xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>io.github.mksh.jzorba</groupId>
+	<artifactId>JZorba</artifactId>
+	<packaging>jar</packaging>
+	<version>1.0-SNAPSHOT</version>
+	<name>JZorba</name>
+	<url>http://maven.apache.org</url>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    	<maven.compiler.source>1.8</maven.compiler.source>
+	    <maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+
+			<plugin>
+            	<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<forkMode>once</forkMode>
+					<workingDirectory>${basedir}</workingDirectory>
+					<argLine>-Djava.library.path=${basedir}/target</argLine>
+				</configuration>
+        	</plugin>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<phase>process-classes</phase>
+						<configuration>
+							<target
+								name="jni"
+								description="Generate headers and compile the native code">
+								<echo>Generating JNI headers</echo>
+								<exec executable="javah" >
+									<arg value="-o" />
+									<arg value="${project.basedir}/include/jni_Zorba.h" />
+									<arg value="-classpath" />
+									<arg value="${project.build.outputDirectory}" />
+									<arg value="-force" />
+									<arg value="io.github.mksh.jzorba.JZorba" />
+									<arg value="io.github.mksh.jzorba.JZorbaQuery" />
+								</exec>
+
+								<exec executable="make" ></exec>
+							</target>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
