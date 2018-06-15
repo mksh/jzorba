@@ -28,9 +28,9 @@ public class JZorbaQuery {
         this.queryError = null;
 	};
 
-    public synchronized void compile() {
+    public void compile() throws JZorbaError {
         if (!this.isCompiled()) {
-            this.doCompile(zorba);
+            this.doCompile(this.zorba);
         };
     };
 
@@ -38,12 +38,12 @@ public class JZorbaQuery {
     /**
      * Load a document into query context.
      */
-    private native void doLoadContextDocument(String documentContent);
+    private native void doLoadContextDocument(String documentContent) throws JZorbaError;
 
     /**
      * Recompile a query
      */
-    private native void doCompile(JZorba zorba);
+    private native void doCompile(JZorba zorba)  throws JZorbaError;
 
     public Boolean isCompiled() {
         // After compilation which produced an error, query proxy is not removed yet
@@ -54,16 +54,20 @@ public class JZorbaQuery {
         return queryError != null;
     };
 
+    public String getErrorMessage() {
+        return this.queryError;
+    };
+
     public String[] getErrorDetail() {
         String[] resultArr = {
-            new String(this.queryError),
-            new String(this.queryErrorSourceURI),
-            new String(this.queryErrorSourceLine)
+            this.queryError,
+            this.queryErrorSourceURI,
+            this.queryErrorSourceLine
         };
         return resultArr;
     };
 
-    public void loadContextDocument(String documentContent) {
+    public void loadContextDocument(String documentContent)  throws JZorbaError {
         this.compile();
         this.doLoadContextDocument(documentContent);
     };
@@ -71,7 +75,7 @@ public class JZorbaQuery {
     /**
      * Execute a query, return result XML string.
      */
-    public native String execute();
+    public native String execute()  throws JZorbaError;
 
     /**
      * Set previously loaded document as query context.

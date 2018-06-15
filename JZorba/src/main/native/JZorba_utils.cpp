@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdint.h>
 
 #include "jzorba.h"
@@ -69,7 +70,20 @@ JZorbaQueryProxy* getJQueryAttr__JZorbaQueryProxy(JNIEnv * env, jobject obj) {
     jclass objClass = env->GetObjectClass(obj);
     jfieldID fieldID = env->GetFieldID(objClass, "cZorbaQryProxy", "J");
     unsigned long ptr = env->GetLongField(obj, fieldID);
+
+    assert(ptr);
+
     return reinterpret_cast<JZorbaQueryProxy*>(ptr);
 };
+
+
+    void throwJVMQueryException(JNIEnv * env, jobject query, const std::exception& exc) {
+        setJQueryAttr__String(env, query, "queryError", env->NewStringUTF(exc.what()));
+        jclass errorClass = env->FindClass("io/github/mksh/jzorba/JZorbaError");
+        jmethodID errCtor = env->GetMethodID(errorClass, "<init>", "(Lio/github/mksh/jzorba/JZorbaQuery;)V");
+        jobject error = env->NewObject(errorClass, errCtor, query);
+        jthrowable* errThrowable = reinterpret_cast<jthrowable*>(&error);
+        env->Throw(*errThrowable);
+    };
 
 };

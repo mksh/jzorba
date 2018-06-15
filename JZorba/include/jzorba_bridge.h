@@ -29,6 +29,8 @@ extern "C" {
     // JZorbaQueryProxy access
     JZorbaQueryProxy* getJQueryAttr__JZorbaQueryProxy(JNIEnv *, jobject);
 
+    void throwJVMQueryException(JNIEnv*, jobject, const std::exception&);
+
 }
 
 #endif

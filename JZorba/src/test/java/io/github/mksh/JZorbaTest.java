@@ -9,6 +9,7 @@ import junit.extensions.TestSetup;
 
 import io.github.mksh.jzorba.JZorba;
 import io.github.mksh.jzorba.JZorbaQuery;
+import io.github.mksh.jzorba.JZorbaError;
 
 
 /**
@@ -118,7 +119,7 @@ public class JZorbaTest
 
     }
 
-    public void testCompileQuery() {
+    public void testCompileQuery() throws JZorbaError {
         JZorba jZorba = new JZorba();
 
         String queryString = String.join(
@@ -137,14 +138,33 @@ public class JZorbaTest
         assertEquals(result, "479001600");
     }
 
-    public void testLoadQueryDocument() {
+    public void testCompileQueryError() {
         JZorba jZorba = new JZorba();
 
         String queryString = String.join(
             System.getProperty("line.separator"),
-            "let s1 = /root/child/li/s[1];",
-            "let s2 = /root/child/li/s[2];",
-            "return string-join((s1, s2, \"!\"), ' ')"
+            ")ml;"
+        );
+        try {
+            JZorbaQuery query = jZorba.compileQuery(queryString);
+            fail( "Missing exception" );
+        } catch (JZorbaError exc) {
+            assertEquals(
+                exc.toString(),
+                "io.github.mksh.jzorba.JZorbaError: invalid expression: syntax error, unexpected end of file, the query body should not be empty"
+            );
+        };
+
+    }
+   
+    public void testLoadQueryDocument() throws JZorbaError {
+        JZorba jZorba = new JZorba();
+
+        String queryString = String.join(
+            System.getProperty("line.separator"),
+            "let $s1 := /root/child/li/s[1]",
+            "let $s2 := /root/child/li/s[2]",
+            "   return string-join(($s1, $s2, \"!\"), ' ')"
         );
 
         String documentString = String.join(
@@ -161,6 +181,6 @@ public class JZorbaTest
         query.loadContextDocument(documentString);
         String result = query.execute();
         assertEquals(result, "Hello Zorba !");
-    }
+    } 
 
 }

@@ -27,13 +27,16 @@ StaticContext* JZorbaProxy::getStaticContext() {
     return this->staticCtx.get();
 };
 
-JZorbaQueryProxy::JZorbaQueryProxy(Zorba* zorbaInstance, StaticContext* staticContext, const String& querySource) {
-    this->query = zorbaInstance->compileQuery(querySource, staticContext);
-    this->zorba = zorbaInstance;
+JZorbaQueryProxy::JZorbaQueryProxy(JZorbaProxy* zorbaProxy, const String& querySource) {
+    this->zorbaProxy = zorbaProxy;
+    Zorba* zorba = zorbaProxy->getZorba();
+    StaticContext* staticCtx = zorbaProxy->getStaticContext();
+    this->query = zorba->compileQuery(querySource, staticCtx);
+
 };
 
-Zorba* JZorbaQueryProxy::getZorba() {
-    return this->zorba;
+JZorbaProxy* JZorbaQueryProxy::getZorbaProxy() {
+    return this->zorbaProxy;
 };
 
 XQuery* JZorbaQueryProxy::getXQuery() {

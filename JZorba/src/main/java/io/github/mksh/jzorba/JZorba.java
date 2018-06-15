@@ -50,7 +50,7 @@ public class JZorba {
         return (this.isDebug == 1) ? true: false;
     };
 
-    public JZorbaQuery compileQuery(String querySource) {
+    public JZorbaQuery compileQuery(String querySource)  throws JZorbaError {
         JZorbaQuery query = new JZorbaQuery(this, querySource);
         query.compile();
         return query;

@@ -30,11 +30,11 @@ class JZorbaProxy {
 class JZorbaQueryProxy {
     private:
         zorba::XQuery_t query;
-        zorba::Zorba* zorba;
+        JZorbaProxy* zorbaProxy;
     public:
         zorba::XQuery* getXQuery();
-        zorba::Zorba* getZorba();
-        JZorbaQueryProxy(zorba::Zorba*, zorba::StaticContext*, const zorba::String&);
+        JZorbaProxy* getZorbaProxy();
+        JZorbaQueryProxy(JZorbaProxy* proxy, const zorba::String&);
         ~JZorbaQueryProxy();
 };
 

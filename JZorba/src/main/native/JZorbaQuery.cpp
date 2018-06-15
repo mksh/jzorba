@@ -20,7 +20,7 @@ JNIEXPORT void JNICALL Java_io_github_mksh_jzorba_JZorbaQuery_doCompile
 
     JZorbaProxy* proxy = getJObjectAttr__proxy(env, env->GetObjectClass(jZorba));
     Zorba* zorbaInstance = proxy->getZorba();
-    StaticContext* staticCtx = proxy->getStaticContext();
+    const StaticContext* staticCtx = proxy->getStaticContext();
 
     // Convert query source string
     jstring jQ = getJQueryAttr__String(env, that, "querySource");
@@ -28,7 +28,7 @@ JNIEXPORT void JNICALL Java_io_github_mksh_jzorba_JZorbaQuery_doCompile
     const char* q = env->GetStringUTFChars(jQ, JNI_FALSE);
 
     try {
-        JZorbaQueryProxy* queryProxy = new JZorbaQueryProxy(zorbaInstance, staticCtx, String(q));
+        JZorbaQueryProxy* queryProxy = new JZorbaQueryProxy(proxy, String(q));
         env->ReleaseStringUTFChars(jQ, q);
         setJQueryAttr__void(env, that, "cZorbaQryProxy", queryProxy);
     } catch (XQueryException const& e) {
@@ -37,8 +37,10 @@ JNIEXPORT void JNICALL Java_io_github_mksh_jzorba_JZorbaQuery_doCompile
         ns << e.source_line();
         setJQueryAttr__String(env, that, "queryErrorSourceLine", env->NewStringUTF(ns.str().c_str()));
         setJQueryAttr__String(env, that, "queryError", env->NewStringUTF(e.what()));
+        throwJVMQueryException(env, that, e);
     } catch (ZorbaException const& e) {
         setJQueryAttr__String(env, that, "queryError", env->NewStringUTF(e.what()));
+        throwJVMQueryException(env, that, e);
     };
 
     // Don't uncomment it: JVM will take care of the string for us :3
@@ -57,12 +59,7 @@ JNIEXPORT jstring JNICALL Java_io_github_mksh_jzorba_JZorbaQuery_execute
         serializationOptions.omit_xml_declaration = ZORBA_OMIT_XML_DECLARATION_YES;
         queryProxy->getXQuery()->execute(os, &serializationOptions);
     } catch (const ZorbaException& e) {
-        setJQueryAttr__String(env, that, "queryError", env->NewStringUTF(e.what()));
-        jclass errorClass = env->FindClass("io/github/mksh/jzorba/JZorbaError");
-        jmethodID errCtor = env->GetMethodID(errorClass, "<init>", "(Iio/github/mksh/jzorba/JZorbaQuery;[I)V");
-        jobject error = env->NewObject(errorClass, errCtor, that);
-        jthrowable* errThrowable = reinterpret_cast<jthrowable*>(&error);
-        env->Throw(*errThrowable);
+        throwJVMQueryException(env, that, e);
     };
     return env->NewStringUTF(os.str().c_str());
 };
@@ -75,7 +72,7 @@ JNIEXPORT jstring JNICALL Java_io_github_mksh_jzorba_JZorbaQuery_execute
 JNIEXPORT void JNICALL Java_io_github_mksh_jzorba_JZorbaQuery_doLoadContextDocument
   (JNIEnv * env, jobject that, jstring documentString) {
     JZorbaQueryProxy* queryProxy = getJQueryAttr__JZorbaQueryProxy(env, that);
-    Zorba* zorba = queryProxy->getZorba();
+    Zorba* zorba = queryProxy->getZorbaProxy()->getZorba();
     XmlDataManager_t xmlDataManager = zorba->getXmlDataManager();
     const char * documentContent = env->GetStringUTFChars(documentString, JNI_FALSE);
     try {
@@ -86,14 +83,9 @@ JNIEXPORT void JNICALL Java_io_github_mksh_jzorba_JZorbaQuery_doLoadContextDocum
         DynamicContext* context = queryProxy->getXQuery()->getDynamicContext();
         context->setContextItem(item);
     } catch (const ZorbaException& e) {
-        // Throw an exception if invalid XML is received.
         env->ReleaseStringUTFChars(documentString, documentContent);
-        setJQueryAttr__String(env, that, "queryError", env->NewStringUTF(e.what()));
-        jclass errorClass = env->FindClass("io/github/mksh/jzorba/JZorbaError");
-        jmethodID errCtor = env->GetMethodID(errorClass, "<init>", "(Iio/github/mksh/jzorba/JZorbaQuery;[I)V");
-        jobject error = env->NewObject(errorClass, errCtor, that);
-        jthrowable* errThrowable = reinterpret_cast<jthrowable*>(&error);
-        env->Throw(*errThrowable);
+        // Throw an exception if invalid XML is received.
+        throwJVMQueryException(env, that, e);
     };
     
   };
